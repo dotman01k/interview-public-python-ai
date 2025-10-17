@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatapp-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: chatapp-frontend
+  ports:
+    - port: 80
+      targetPort: 80

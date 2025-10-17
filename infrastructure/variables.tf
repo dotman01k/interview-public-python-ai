@@ -36,8 +36,8 @@ variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "ChatApp"
-    ManagedBy   = "Terraform"
+    Project   = "ChatApp"
+    ManagedBy = "Terraform"
   }
 }
 
@@ -111,5 +111,13 @@ variable "openai_capacity" {
 variable "postgres_location" {
   description = "Azure region for PostgreSQL (can be different from main location if needed)"
   type        = string
-  default     = ""  # Empty string means use var.location
+  default     = "" # Empty string means use var.location
 }
+
+variable "resource_group_name" {
+  description = "Target resource group"
+  type        = string
+}
+
+
+

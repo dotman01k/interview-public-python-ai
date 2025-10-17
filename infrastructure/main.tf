@@ -21,6 +21,28 @@ provider "azurerm" {
   }
 }
 
+# Random suffixes to guarantee uniqueness
+resource "random_string" "acr_suffix" {
+  length  = 6
+  lower   = true
+  upper   = false
+  numeric = true
+  special = false
+}
+
+resource "random_string" "pg_suffix" {
+  length  = 4
+  lower   = true
+  upper   = false
+  numeric = true
+  special = false
+}
+
+locals {
+  acr_name = replace("${var.project_name}${var.environment}acr${random_string.acr_suffix.result}", "-", "")
+  pg_name  = "${var.project_name}-${var.environment}-pg-${random_string.pg_suffix.result}"
+}
+
 # Resource Group
 resource "azurerm_resource_group" "main" {
   name     = "${var.project_name}-${var.environment}-rg"
@@ -31,7 +53,7 @@ resource "azurerm_resource_group" "main" {
 
 # Container Registry
 resource "azurerm_container_registry" "main" {
-  name                = replace("${var.project_name}${var.environment}acr", "-", "")
+  name                = local.acr_name
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "Basic"
@@ -66,8 +88,6 @@ resource "azurerm_kubernetes_cluster" "main" {
     network_policy = "azure"
   }
 
-  # Use AKS managed identity to pull from ACR (requires ACR to be created first)
-  # This is an alternative to role assignment that doesn't require additional permissions
   depends_on = [
     azurerm_container_registry.main
   ]
@@ -87,7 +107,7 @@ resource "random_password" "postgres_password" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "${var.project_name}-${var.environment}-pg"
+  name                   = local.pg_name
   resource_group_name    = azurerm_resource_group.main.name
   location               = var.postgres_location != "" ? var.postgres_location : azurerm_resource_group.main.location
   version                = "14"
@@ -95,6 +115,12 @@ resource "azurerm_postgresql_flexible_server" "main" {
   administrator_password = random_password.postgres_password.result
   storage_mb             = 32768
   sku_name               = "B_Standard_B2s"
+
+  timeouts {
+    create = "1h"
+    update = "1h"
+    delete = "1h"
+  }
 
   tags = var.tags
 

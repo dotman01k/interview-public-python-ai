@@ -29,3 +29,15 @@ dbMigration:
     repository: chatapp-backend
     tag: latest
   backoffLimit: 3
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: <replace-with $login>/chatapp-frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: LoadBalancer
+    port: 80
+  env:
+    BACKEND_URL: "http://chatapp-backend.default.svc.cluster.local:8000"
